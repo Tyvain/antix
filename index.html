@@ -3,18 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mastodon Tag Viewer</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Mastodon API Viewer</title>
 </head>
 <body>
-    <h1>#Gaming - Mastodon Tag Viewer</h1>
-    <div id="login">
-        <button onclick="login()">Login with Mastodon</button>
-    </div>
-    <div id="content" style="display:none;">
-        <h2>Posts tagged #Gaming</h2>
+    <button id="login">Login with Mastodon</button>
+    <div id="content" style="display: none;">
+        <h3>Posts tagged with "gaming":</h3>
         <ul id="posts"></ul>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        const mastodonInstance = "https://mastodon.social"; // L'instance Mastodon
+        const clientId = "aFu27ZiTkQXG85wmCRRQMZzlAQLHdE4Spif2DAnOnqM"; // Remplacez par votre Client ID
+        const redirectUri = "https://tyvain.github.io/antix"; // URL de redirection de votre app GitHub Pages
+
+        // Fonction pour se connecter avec Mastodon
+        async function login() {
+            const authUrl = `${mastodonInstance}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=read`;
+            window.location.href = authUrl; // Redirige vers Mastodon pour l'authentification
+        }
+
+        // Fonction pour récupérer les posts avec un access token
+        async function fetchPosts(accessToken) {
+            const response = await fetch(`${mastodonInstance}/api/v2/timelines/tag/gaming`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+            const posts = await response.json();
+            const postList = document.getElementById("posts");
+            posts.forEach(post => {
+                const listItem = document.createElement("li");
+                listItem.innerHTML = `
+                    <p><strong>${post.account.display_name}</strong>: ${post.content}</p>
+                `;
+                postList.appendChild(listItem);
+            });
+        }
+
+        // Vérification du code dans l'URL après redirection
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("access_token")) {
+            const accessToken = urlParams.get("access_token");
+            document.getElementById("login").style.display = "none";
+            document.getElementById("content").style.display = "block";
+            fetchPosts(accessToken); // Récupérer les posts après avoir l'access token
+        }
+
+        document.getElementById("login").addEventListener("click", login);
+    </script>
 </body>
 </html>

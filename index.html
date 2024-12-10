@@ -3,35 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mastodon API Viewer</title>
+    <title>Mastodon Tag Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #content {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <button id="login">Login with Mastodon</button>
-    <div id="content" style="display: none;">
-        <h3>Posts tagged with "gaming":</h3>
+    <h1>Connectez-vous à Mastodon et affichez les posts du tag #gaming</h1>
+
+    <!-- Formulaire de connexion -->
+    <div id="login">
+        <button onclick="login()">Se connecter à Mastodon</button>
+    </div>
+
+    <!-- Affichage des posts -->
+    <div id="content">
+        <h2>Posts avec le tag #gaming</h2>
         <ul id="posts"></ul>
     </div>
 
     <script>
-        const mastodonInstance = "https://mastodon.social"; // L'instance Mastodon
-        const clientId = "6298614"; // Remplacez par votre Client ID
-        const redirectUri = "https://tyvain.github.io/antix"; // URL de redirection de votre app GitHub Pages
+        const mastodonInstance = "https://mastodon.social";  // Instance Mastodon
+        const clientId = "6298614";  // Votre client_id de l'application
+        const redirectUri = "https://tyvain.github.io/antix";  // L'URL de votre page (GitHub Pages)
 
-        // Fonction pour se connecter avec Mastodon
+        // Fonction pour démarrer le processus de connexion
         async function login() {
             const authUrl = `${mastodonInstance}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=read`;
-            window.location.href = authUrl; // Redirige vers Mastodon pour l'authentification
+            window.location.href = authUrl;
         }
 
-        // Fonction pour récupérer les posts avec un access token
+        // Fonction pour récupérer le token d'accès depuis l'URL après redirection
+        function getAccessTokenFromUrl() {
+            const urlParams = new URLSearchParams(window.location.hash.substr(1));  // Ignore le "#" dans l'URL
+            return urlParams.get('access_token');
+        }
+
+        // Fonction pour récupérer les posts du tag #gaming
         async function fetchPosts(accessToken) {
             const response = await fetch(`${mastodonInstance}/api/v2/timelines/tag/gaming`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`
                 }
             });
+
             const posts = await response.json();
             const postList = document.getElementById("posts");
+
             posts.forEach(post => {
                 const listItem = document.createElement("li");
                 listItem.innerHTML = `
@@ -41,16 +64,14 @@
             });
         }
 
-        // Vérification du code dans l'URL après redirection
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has("access_token")) {
-            const accessToken = urlParams.get("access_token");
-            document.getElementById("login").style.display = "none";
-            document.getElementById("content").style.display = "block";
-            fetchPosts(accessToken); // Récupérer les posts après avoir l'access token
+        // Vérification du token d'accès après la redirection
+        const accessToken = getAccessTokenFromUrl();
+        if (accessToken) {
+            // Si le token est trouvé, afficher le contenu et récupérer les posts
+            document.getElementById("login").style.display = "none";  // Cacher le bouton de connexion
+            document.getElementById("content").style.display = "block";  // Afficher les posts
+            fetchPosts(accessToken);  // Récupérer les posts du tag #gaming
         }
-
-        document.getElementById("login").addEventListener("click", login);
     </script>
 </body>
 </html>

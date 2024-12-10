@@ -25,3 +25,32 @@ async function fetchAccessToken(code) {
     const data = await response.json();
     return data.access_token;
 }
+
+async function fetchPosts(accessToken) {
+    const response = await fetch(`${mastodonInstance}/api/v2/timelines/tag/gaming`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`
+        }
+    });
+    const posts = await response.json();
+    const postList = document.getElementById("posts");
+    posts.forEach(post => {
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+            <p><strong>${post.account.display_name}</strong>: ${post.content}</p>
+        `;
+        postList.appendChild(listItem);
+    });
+}
+
+// Vérification après redirection
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has("code")) {
+    const code = urlParams.get("code");
+    fetchAccessToken(code).then(token => {
+        document.getElementById("login").style.display = "none";
+        document.getElementById("content").style.display = "block";
+        fetchPosts(token);
+    });
+}
+
